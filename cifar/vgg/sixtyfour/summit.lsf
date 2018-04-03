@@ -1,0 +1,14 @@
+#!/bin/bash
+#BSUB -P CSC276
+#BSUB -W 2:00
+#BSUB -nnodes 64
+#BSUB -J hypervgg64
+#BSUB -o out_hyper.%J
+#BSUB -e err_hyper.%J
+
+module load pytorch 
+
+cd /gpfs/alpinetds/proj-shared/csc276/yngtodd/paper_hyperspace/vgg_cifar/sixtyfour
+
+date
+jsrun -n 64 -a 1 -g 6 python hyper64.py --results_dir /gpfs/alpinetds/proj-shared/csc276/yngtodd/paper_hyperspace/vgg_cifar/sixtyfour/results

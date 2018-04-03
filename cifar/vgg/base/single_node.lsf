@@ -1,0 +1,18 @@
+#!/bin/bash
+#BSUB -P CSC276
+#BSUB -W 2:00
+#BSUB -nnodes 1 
+#BSUB -alloc_flags gpumps
+#BSUB -J main_vgg 
+#BSUB -o one_node_o.%J
+#BSUB -e one_node_e.%J
+
+module load cuda
+module load cudnn
+module load openblas
+module load gcc
+
+cd /gpfs/alpinetds/proj-shared/csc276/yngtodd/paper_hyperspace/vgg_cifar 
+
+date
+jsrun -n 1 -a 1 -g 6 python main.py --use_cuda True  
