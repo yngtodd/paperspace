@@ -18,6 +18,7 @@ class BasicBlock(nn.Module):
 
     def __init__(self, in_planes, planes, kernel1=3, kernel2=3, shortcut_kernel=1, stride=1):
         super(BasicBlock, self).__init__()
+        self.shortcut_kernel = shortcut_kernel
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=kernel1, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=kernel2, stride=1, padding=1, bias=False)
@@ -26,7 +27,7 @@ class BasicBlock(nn.Module):
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != self.expansion*planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=shortcut_kernel, stride=stride, bias=False),
+                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=self.shortcut_kernel, stride=stride, bias=False),
                 nn.BatchNorm2d(self.expansion*planes)
             )
 
@@ -68,10 +69,10 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, initial_kernel=3,
-                 b1kernel1=3, b1kernel2=1, b1kernel3=3,
-                 b2kernel1=3, b2kernel2=1, b2kernel3=3,
-                 b3kernel1=3, b3kernel2=1, b3kernel3=3,
-                 b4kernel1=3, b4kernel2=1, b4kernel3=3,
+                 b1kernel1=3, b1kernel2=3, b1kernel3=3,
+                 b2kernel1=3, b2kernel2=3, b2kernel3=3,
+                 b3kernel1=3, b3kernel2=3, b3kernel3=3,
+                 b4kernel1=3, b4kernel2=3, b4kernel3=3,
                  num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 64
@@ -91,19 +92,19 @@ class ResNet(nn.Module):
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=self.initial_kernel, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
-        self.layer1 = self._make_layer(block, planes=64, num_blocks=num_blocks[0], kernel1=self.b1kernel1, kernel2=self.b1kernel2, kernel3=self.b1kernel3, stride=1)
-        self.layer2 = self._make_layer(block, planes=128, num_blocks=num_blocks[1], kernel1=self.b2kernel1, kernel2=self.b2kernel2, kernel3=self.b2kernel3, stride=2)
-        self.layer3 = self._make_layer(block, planes=256, num_blocks=num_blocks[2], kernel1=self.b3kernel1, kernel2=self.b3kernel2, kernel3=self.b2kernel3, stride=2)
-        self.layer4 = self._make_layer(block, planes=512, num_blocks=num_blocks[3], kernel1=self.b4kernel1, kernel2=self.b4kernel2, kernel3=self.b2kernel3, stride=2)
+        self.layer1 = self._make_layer(block, planes=64, num_blocks=num_blocks[0], kernel1=self.b1kernel1, kernel2=self.b1kernel2, stride=1)
+        self.layer2 = self._make_layer(block, planes=128, num_blocks=num_blocks[1], kernel1=self.b2kernel1, kernel2=self.b2kernel2, stride=2)
+        self.layer3 = self._make_layer(block, planes=256, num_blocks=num_blocks[2], kernel1=self.b3kernel1, kernel2=self.b3kernel2, stride=2)
+        self.layer4 = self._make_layer(block, planes=512, num_blocks=num_blocks[3], kernel1=self.b4kernel1, kernel2=self.b4kernel2, stride=2)
         self.linear = nn.Linear(512*block.expansion, num_classes)
 
-    def _make_layer(self, block, planes, num_blocks, kernel1, kernel2, kernel3, stride):
+    def _make_layer(self, block, planes, num_blocks, kernel1, kernel2, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
-        print('block is {}'.format(block))
+        print('kernel1: {}, kernel2: {}'.format(kernel1, kernel2))
         #if block == 'BasicBlock':
         for stride in strides:
-            layers.append(block(self.in_planes, planes, kernel1, kernel2, stride))
+            layers.append(block(self.in_planes, planes, kernel1, kernel2, stride=stride))
             self.in_planes = planes * block.expansion
         # else:
         #     for stride in strides:
@@ -140,7 +141,7 @@ def ResNet152():
 
 
 def test():
-    net = ResNet152()
+    net = ResNet18()
     y = net(Variable(torch.randn(1,3,32,32)))
     print(y.size())
 
