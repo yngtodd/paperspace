@@ -1,5 +1,7 @@
 '''ResNet in PyTorch.
 
+Branch: adapt
+
 For Pre-activation ResNet, see 'preact_resnet.py'.
 
 Reference:
@@ -46,32 +48,43 @@ class BasicBlock(nn.Module):
 
 class Bottleneck(nn.Module):
     expansion = 4
+    short_planes = 1
 
-    def __init__(self, in_planes, planes, kernel1=1, dropout1=0.0,
-                 kernel2=3, dropout2=0.0, kernel3=1, dropout3=0.0,
+    def __init__(self, in_planes, planes1,
+                 planes2, planes3,
+                 kernel1=1, dropout1=0.0,
+                 kernel2=3, dropout2=0.0,
+                 kernel3=1, dropout3=0.0,
                  shortcut_kernel=1, stride=1):
         super(Bottleneck, self).__init__()
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=kernel1, bias=False)
+        #self.short_planes = short_planes
+        self.planes1 = planes1
+        self.planes2 = planes2
+        self.planes3 = planes3
+        print(self.planes3)
+        self.conv1 = nn.Conv2d(in_planes, self.planes1, kernel_size=kernel1, bias=False)
         self.drop1 = nn.Dropout2d(p=dropout1)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=kernel2, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(self.planes1)
+        self.conv2 = nn.Conv2d(self.planes1, self.planes2, kernel_size=kernel2, stride=stride, padding=1, bias=False)
         self.drop2 = nn.Dropout2d(p=dropout2)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, self.expansion*planes, kernel_size=kernel3, bias=False)
+        self.bn2 = nn.BatchNorm2d(self.planes2)
+        self.conv3 = nn.Conv2d(self.planes2, self.expansion*self.planes3, kernel_size=kernel3, bias=False)
         self.drop3 = nn.Dropout2d(p=dropout3)
-        self.bn3 = nn.BatchNorm2d(self.expansion*planes)
+        self.bn3 = nn.BatchNorm2d(self.expansion*self.planes3)
 
         self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion*planes:
+        if stride != 1 or in_planes != self.expansion*self.planes3:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=shortcut_kernel, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion*planes)
+                nn.Conv2d(in_planes, self.expansion*self.planes3, kernel_size=shortcut_kernel, stride=stride, bias=False),
+                nn.BatchNorm2d(self.expansion*self.planes3)
             )
 
     def forward(self, x):
         out = F.relu(self.bn1(self.drop1(self.conv1(x))))
         out = F.relu(self.bn2(self.drop2(self.conv2(out))))
+        #print('out at conv2 has size {}'.format(out.size()))
         out = self.bn3(self.drop3(self.conv3(out)))
+        print('out has size {}'.format(out.size()))
         out += self.shortcut(x)
         out = F.relu(out)
         return out
@@ -79,10 +92,10 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, initial_kernel=3,
-                 planes1=64, l1kernel1=1, l1kernel2=3, l1kernel3=1, dropout1=0.0, stride1=1,
-                 planes2=128, l2kernel1=1, l2kernel2=3, l2kernel3=1, dropout2=0.0, stride2=2,
-                 planes3=256, l3kernel1=1, l3kernel2=3, l3kernel3=1, dropout3=0.0, stride3=2,
-                 planes4=512, b4kernel1=1, b4kernel2=3, b4kernel3=1, dropout4=0.0, stride4=2,
+                 l1kernel1=1, l1kernel2=3, l1kernel3=1, dropout1=0.0, stride1=1,
+                 l2kernel1=1, l2kernel2=3, l2kernel3=1, dropout2=0.0, stride2=2,
+                 l3kernel1=1, l3kernel2=3, l3kernel3=1, dropout3=0.0, stride3=2,
+                 l4kernel1=1, l4kernel2=3, l4kernel3=1, dropout4=0.0, stride4=2,
                  num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 64
@@ -90,31 +103,27 @@ class ResNet(nn.Module):
         self.num_blocks = num_blocks
         self.initial_kernel = initial_kernel
         # Block 1
-        self.planes1 = planes1
         self.l1kernel1 = l1kernel1
         self.l1kernel2 = l1kernel2
         self.l1kernel3 = l1kernel3
         self.dropout1 = dropout1
         self.stride1 = stride1
         # Block 2
-        self.planes2 = planes2
         self.l2kernel1 = l2kernel1
         self.l2kernel2 = l2kernel2
         self.l2kernel3 = l2kernel3
         self.dropout2 = dropout2
         self.stride2 = stride2
         # Block 3
-        self.planes3 = planes3
         self.l3kernel1 = l3kernel1
         self.l3kernel2 = l3kernel2
         self.l3kernel3 = l3kernel3
         self.dropout3 = dropout3
         self.stride3 = stride3
         # Block 4
-        self.planes4 = planes4
-        self.b4kernel1 = b4kernel1
-        self.b4kernel2 = b4kernel2
-        self.b4kernel3 = b4kernel3
+        self.l4kernel1 = l4kernel1
+        self.l4kernel2 = l4kernel2
+        self.l4kernel3 = l4kernel3
         self.dropout4 = dropout4
         self.stride4 = stride4
 
@@ -126,57 +135,94 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer4()
         self.linear = nn.Linear(512*block.expansion, num_classes)
 
-    def _make_layer(self, block, planes, num_blocks, kernel1, dropout1,
+    def _make_layer(self, block, planes1, planes2, planes3, num_blocks, kernel1, dropout1,
                     kernel2, dropout2, kernel3, dropout3, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
-        for stride in strides:
+        for i in strides:
+            #print('planes is {}'.format(planes[i]))
             layers.append(
                 block(
-                    self.in_planes, planes,
-                    kernel1, dropout1,
-                    kernel2, dropout1,
-                    kernel3, dropout3, stride=stride
+                    self.in_planes, planes1=planes1,
+                    kernel1=kernel1, dropout1=dropout1,
+                    planes2=planes2,
+                    kernel2=kernel2, dropout2=dropout2,
+                    planes3=planes3,
+                    kernel3=kernel3, dropout3=dropout3, stride=stride
                 )
             )
-            self.in_planes = planes * block.expansion
+            self.in_planes = planes3 * block.expansion
 
         return nn.Sequential(*layers)
 
     def _calculate_planes(self, input_size, kernel, padding, stride):
         """Calculate the output size of a convolution layer."""
-        return ((input_size + 2*padding - kernel) / s) + 1
+        return ((input_size + 2*padding - kernel) // stride) + 1
 
     def _make_layer1(self):
+        #print(self.in_planes, self.l1kernel1, self.stride1)
+        l1planes1 = self._calculate_planes(input_size=self.in_planes, kernel=self.l1kernel1, padding=0, stride=self.stride1)
+        l1planes2 = self._calculate_planes(input_size=l1planes1, kernel=self.l1kernel2, padding=1, stride=self.stride1)
+        #print('input for l1planes3 - input: {}, kernel: {}, stride: {}'.format(l1planes2, self.l1kernel3, self.stride1))
+        l1planes3 = self._calculate_planes(input_size=l1planes2, kernel=self.l1kernel3, padding=0, stride=self.stride1)
+        planes = [l1planes1, l1planes2, l1planes3]
+        #self.l1short_planes3 = self._calculate_planes(input_size=self.in_planes, kernel=self.shortcut_kernel, padding=0, stride=self.stride1)
+
         return self._make_layer(
-                self.block, planes=self.planes1, num_blocks=self.num_blocks[0],
+                self.block, planes1=l1planes1, num_blocks=self.num_blocks[0],
                 kernel1=self.l1kernel1, dropout1=self.dropout1,
+                planes2=l1planes2,
                 kernel2=self.l1kernel2, dropout2=self.dropout2,
+                planes3=l1planes3,
                 kernel3=self.l1kernel3, dropout3=self.dropout3, stride=self.stride1
             )
 
     def _make_layer2(self):
+        l2planes1 = self._calculate_planes(self.in_planes, self.l2kernel1, padding=0, stride=self.stride2)
+        l2planes2 = self._calculate_planes(l2planes1, self.l2kernel2, padding=1, stride=self.stride2)
+        l2planes3 = self._calculate_planes(l2planes2, self.l2kernel3, padding=0, stride=self.stride2)
+        planes = [l2planes1, l2planes2, l2planes3]
+        #self.l2short_planes3 = self._calculate_planes(self.in_planes, self.shortcut_kernel, padding=0, stride=self.stride2)
+
         return self._make_layer(
-                self.block, planes=self.planes2, num_blocks=self.num_blocks[1],
+                self.block, planes1=l2planes1, num_blocks=self.num_blocks[1],
                 kernel1=self.l2kernel1, dropout1=self.dropout1,
+                planes2=l2planes2,
                 kernel2=self.l2kernel2, dropout2=self.dropout2,
+                planes3=l2planes3,
                 kernel3=self.l2kernel3, dropout3=self.dropout3, stride=self.stride2
             )
 
     def _make_layer3(self):
+        l3planes1 = self._calculate_planes(self.in_planes, self.l3kernel1, padding=0, stride=self.stride3)
+        l3planes2 = self._calculate_planes(l3planes1, self.l3kernel2, padding=1, stride=self.stride3)
+        l3planes3 = self._calculate_planes(l3planes2, self.l3kernel3, padding=0, stride=self.stride3)
+        planes = [l3planes1, l3planes2, l3planes3]
+        #self.l3short_planes3 = self._calculate_planes(self.in_planes, self.shortcut_kernel, padding=0, stride=self.stride3)
+
         return self._make_layer(
-                self.block, planes=self.planes3, num_blocks=self.num_blocks[2],
+                self.block, planes1=l3planes1, num_blocks=self.num_blocks[2],
                 kernel1=self.l3kernel1, dropout1=self.dropout1,
+                planes2=l3planes2,
                 kernel2=self.l3kernel2, dropout2=self.dropout2,
+                planes3=l3planes3,
                 kernel3=self.l3kernel3, dropout3=self.dropout3, stride=self.stride3
             )
 
     def _make_layer4(self):
+        l4planes1 = self._calculate_planes(self.in_planes, self.l4kernel1, padding=0, stride=self.stride4)
+        l4planes2 = self._calculate_planes(l4planes1, self.l4kernel2, padding=1, stride=self.stride4)
+        l4planes3 = self._calculate_planes(l4planes2, self.l4kernel3, padding=0, stride=self.stride4)
+        #l4short_planes3 = self._calculate_planes(self.in_planes, self.shortcut_kernel, padding=0, stride=self.stride4)
+        planes = [l4planes1, l4planes2, l4planes3]
+
         return self._make_layer(
-                self.block, planes=self.planes4, num_blocks=self.num_blocks[3],
-                kernel1=self.b4kernel1, dropout1=self.dropout1,
-                kernel2=self.b4kernel2, dropout2=self.dropout2,
-                kernel3=self.b4kernel3, dropout3=self.dropout3, stride=self.stride4
+                self.block, planes1=l4planes1, num_blocks=self.num_blocks[3],
+                kernel1=self.l4kernel1, dropout1=self.dropout1,
+                planes2=l4planes2,
+                kernel2=self.l4kernel2, dropout2=self.dropout2,
+                planes3=l4planes3,
+                kernel3=self.l4kernel3, dropout3=self.dropout3, stride=self.stride4
             )
 
     @classmethod
@@ -285,7 +331,7 @@ class ResNet(nn.Module):
         out = out.view(out.size(), -1)
         out = self.layer4(out)
         out = out.view(out.size(), -1)
-        out = F.avg_pool2d(out, 4)
+        out = F.adaptive_avg_pool2d(out, 4)
         print('Output of avg pool {}'.format(out.size()))
         out = out.view(out.size(0), -1)
         print('Input to linear layers has shape {}'.format(out.size()))
@@ -309,8 +355,8 @@ def ResNet152():
     return ResNet(Bottleneck, [3,8,36,3])
 
 
-def test(verbose=False):
-    model = ResNet152()
+def test(verbose=True):
+    model = ResNet50()
 
     if verbose:
         print('Named model parameters that require gradients:\n')
