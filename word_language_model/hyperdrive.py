@@ -10,6 +10,7 @@ import data
 import model
 
 from parser import parse_args
+from hyperspace import hyperdrive
 
 
 def batchify(data, bsz):
@@ -99,6 +100,8 @@ def export_onnx(path, batch_size, seq_len):
 
 def objective(hparams):
 
+    nlayers = int(hparams[0])
+
 
     ntokens = len(corpus.dictionary)
 
@@ -146,7 +149,12 @@ def main():
     global
     criterion = nn.CrossEntropyLoss()
 
-    hparms = [()]
+    hparms = [
+        (2, 5)                                  # nlayers
+        (20, 50)                                # bptt
+        (50, 250)                               # nhid
+        ('RNN_TANH', 'RNN_RELU', 'LSTM', 'GRU') # model
+    ]
 
     hyperdrive(objective=objective,
                hyperparameters=hparams,
