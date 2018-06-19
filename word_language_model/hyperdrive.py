@@ -99,14 +99,16 @@ def export_onnx(path, batch_size, seq_len):
 
 
 def objective(hparams):
-
+    """Minimizing validation loss wrt our hyperparameters"""
     nlayers = int(hparams[0])
-
+    emsize = int(hparams[1])
+    nhid = int(hparams[2])
+    model = str([hparams[3]])
 
     ntokens = len(corpus.dictionary)
 
     global model
-    model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.tied).to(device)
+    model = model.RNNModel(model, ntokens, emsize, nhid, nlayers, args.dropout, args.tied).to(device)
 
     lr = args.lr
     best_val_loss = None
@@ -151,7 +153,7 @@ def main():
 
     hparms = [
         (2, 5)                                  # nlayers
-        (20, 50)                                # bptt
+        (100, 300)                              # word embedding dim
         (50, 250)                               # nhid
         ('RNN_TANH', 'RNN_RELU', 'LSTM', 'GRU') # model
     ]
@@ -163,7 +165,7 @@ def main():
                n_iterations=20,
                verbose=True,
                random_state=0,
-               deadline=120)
+               deadline=7000)
 
 
 if __name__=='__main__':
