@@ -109,6 +109,7 @@ def objective(hparams):
 
     global model
     model = model.RNNModel(model, ntokens, emsize, nhid, nlayers, args.dropout, args.tied).to(device)
+    model = nn.DataParallel(model)
 
     lr = args.lr
     best_val_loss = None
