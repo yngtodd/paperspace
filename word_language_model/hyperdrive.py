@@ -103,7 +103,7 @@ def objective(hparams):
     nlayers = int(hparams[0])
     emsize = int(hparams[1])
     nhid = int(hparams[2])
-    model = str([hparams[3]])
+    model = str(hparams[3])
 
     ntokens = len(corpus.dictionary)
 
@@ -151,7 +151,7 @@ def main():
     global
     criterion = nn.CrossEntropyLoss()
 
-    hparms = [
+    hparams = [
         (2, 5)                                  # nlayers
         (100, 300)                              # word embedding dim
         (50, 250)                               # nhid
