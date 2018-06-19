@@ -37,4 +37,6 @@ def parse_args():
                         help='path to save the final model')
     parser.add_argument('--onnx-export', type=str, default='',
                         help='path to export the final model in onnx format')
+    parser.add_argument('--results_dir', type=str, default='/lustre/atlas/proj-shared/csc264/yngtodd/paperspace/word_language_model',
+                        help='path to save hyperspace results.')
     return parser.parse_args()
