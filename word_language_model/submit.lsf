@@ -1,6 +1,6 @@
 #!/bin/bash
 #BSUB -P CSC264
-#BSUB -J wordhype 
+#BSUB -J wordhype2
 #BSUB -o out.o%J
 #BSUB -W 120 
 #BSUB -nnodes 16

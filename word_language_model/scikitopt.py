@@ -10,7 +10,8 @@ import data
 import model
 
 from parser import parse_args
-from hyperspace import hyperdrive
+#from hyperspace import hyperdrive
+from skopt import gp_minimize
 
 
 def batchify(data, bsz):
@@ -161,16 +162,7 @@ def main():
         ('RNN_TANH', 'RNN_RELU', 'LSTM', 'GRU') # model
     ]
 
-    hyperdrive(objective=objective,
-               hyperparameters=hparams,
-               results_path=args.results_dir,
-               model="GP",
-               n_iterations=20,
-               verbose=True,
-               random_state=0,
-               deadline=7000,
-               checkpoints=True)
-
+    res = gp_minimize(objective, hparams, n_calls=10, verbose=True)
 
 if __name__=='__main__':
     main()
