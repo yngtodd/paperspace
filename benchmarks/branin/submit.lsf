@@ -1,0 +1,13 @@
+#!/bin/bash
+#BSUB -P CSC264
+#BSUB -J braninbench 
+#BSUB -o out.o%J
+#BSUB -W 120 
+#BSUB -nnodes 4 
+
+module load hyperspace
+module load pytorch
+ 
+cd /lustre/atlas/proj-shared/csc264/yngtodd/paperspace/benchmarks/branin
+
+jsrun -n 4 -a 1 -g 4 python benchmark.py --results_dir results

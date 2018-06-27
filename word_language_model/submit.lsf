@@ -1,0 +1,13 @@
+#!/bin/bash
+#BSUB -P CSC264
+#BSUB -J wordhype2
+#BSUB -o out.o%J
+#BSUB -W 120 
+#BSUB -nnodes 16
+
+module load hyperspace
+module load pytorch
+ 
+cd /lustre/atlas/proj-shared/csc264/yngtodd/paperspace/word_language_model
+ 
+jsrun -n 16 -a 1 -g 4 python hyperdrive.py
