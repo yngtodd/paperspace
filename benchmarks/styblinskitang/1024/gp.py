@@ -1,16 +1,18 @@
 import os
 import argparse
+import numpy as np
 
 from hyperspace import hyperdrive
 from hyperspace.kepler import load_results
 
-from skopt.benchmarks import branin
+from hyperspace.benchmarks import StyblinskiTang 
 
+stybtang = StyblinskiTang(10)
 
 def run(results_dir, n_calls=200, n_runs=10):
     """Run benchmark for Branin function."""
-    models = ['GBRT', 'Rand']
-    bounds = [(-5.0, 10.0), (0.0, 15.0)]
+    models = ['GP']
+    bounds = np.tile((-5., 5.), (10, 1))
 
     for model in models:
         model_dir = os.path.join(results_dir, model)
@@ -23,19 +25,19 @@ def run(results_dir, n_calls=200, n_runs=10):
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
-            checkpoint = load_results(directory)
+#            checkpoint = load_results(directory)
 
             hyperdrive(
-              branin, bounds, directory, n_iterations=n_calls,
+              stybtang, bounds, directory, n_iterations=n_calls,
               verbose=True, random_state=random_state,
-              checkpoints=True, restart=checkpoint
+              checkpoints=True
             )
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--n_calls', nargs="?", default=50, type=int, help="Number of function calls.")
-    parser.add_argument('--n_runs', nargs="?", default=5, type=int, help="Number of runs.")
+    parser.add_argument('--n_runs', nargs="?", default=1, type=int, help="Number of runs.")
     parser.add_argument('--results_dir', type=str, help='Path to results directory.')
     args = parser.parse_args()
 

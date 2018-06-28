@@ -1,0 +1,4 @@
+Jobid: 246425
+qsub --mode script -t 2:00 -n 1024 --attrs mcdram=cache:numa=quad -A CSC249ADOA01 run.sh
+Thu Jun 28 14:52:43 2018 +0000 (UTC) submitted with cwd set to: /lus/theta-fs0/projects/Candle_ECP/yngtodd/paperspace/benchmarks/styblinskitang/1024
+jobid 246425 submitted from terminal /dev/pts/45

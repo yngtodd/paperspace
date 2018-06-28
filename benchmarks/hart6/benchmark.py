@@ -1,16 +1,17 @@
 import os
 import argparse
+import numpy as np
 
 from hyperspace import hyperdrive
 from hyperspace.kepler import load_results
 
-from skopt.benchmarks import branin
+from skopt.benchmarks import hart6 
 
 
 def run(results_dir, n_calls=200, n_runs=10):
     """Run benchmark for Branin function."""
-    models = ['GBRT', 'Rand']
-    bounds = [(-5.0, 10.0), (0.0, 15.0)]
+    models = ['GP', 'RF', 'GBRT', 'Rand']
+    bounds = np.tile((0., 1.), (6, 1))
 
     for model in models:
         model_dir = os.path.join(results_dir, model)
@@ -26,7 +27,7 @@ def run(results_dir, n_calls=200, n_runs=10):
             checkpoint = load_results(directory)
 
             hyperdrive(
-              branin, bounds, directory, n_iterations=n_calls,
+              hart6, bounds, directory, n_iterations=n_calls,
               verbose=True, random_state=random_state,
               checkpoints=True, restart=checkpoint
             )
