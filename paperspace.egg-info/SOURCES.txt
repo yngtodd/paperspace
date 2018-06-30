@@ -1,0 +1,7 @@
+README.rst
+setup.py
+paperspace.egg-info/PKG-INFO
+paperspace.egg-info/SOURCES.txt
+paperspace.egg-info/dependency_links.txt
+paperspace.egg-info/requires.txt
+paperspace.egg-info/top_level.txt

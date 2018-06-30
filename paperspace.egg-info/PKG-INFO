@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: paperspace
+Version: 0.0.1
+Summary: Experiments and Results for HyperSpace
+Home-page: https://github.com/yngtodd/paperspace
+Author: Todd Young
+Author-email: youngmt1@ornl.gov
+License: MIT
+Description: UNKNOWN
+Keywords: parallel Bayesian optimization smbo
+Platform: UNKNOWN
