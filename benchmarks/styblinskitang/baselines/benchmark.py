@@ -11,11 +11,11 @@ from skopt import dummy_minimize
 from hyperspace.benchmarks import StyblinksiTang
 
 
-stybtang = StyblinksiTang(4)
+stybtang = StyblinksiTang(7)
 
 
 def run(results_dir, n_calls=200, acq_optimizer="lbfgs"):
-    bounds = np.tile((-5., 5.), (4, 1))
+    bounds = np.tile((-5., 5.), (7, 1))
     optimizers = [("gp_minimize", gp_minimize),
                   ("forest_minimize", forest_minimize),
                   ("gbrt_minimize", gbrt_minimize),
